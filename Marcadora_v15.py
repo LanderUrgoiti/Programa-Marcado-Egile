@@ -243,6 +243,65 @@ def imprimir_excel(ordenfabri,partnumber):
     except:
         messagebox.showerror('ERROR', "ERROR AL IMPRIMIR LA HOJA DE REGISTRO\nCOMPRUEBA SI HAY ALGÚN EXCEL ABIERTO, CIÉRRALO Y VUELVE A INTENTARLO")
 
+def ofids(coditex):
+    SER_FUN = coditex.replace('SER', '')
+    SER_FUN = SER_FUN.replace(' ', '')
+    with db_conn_po('ODBC Driver 17 for SQL Server', BD, BD_BD, BD_USR, BD_PWD) as cursor:
+        try:
+            # COMPROBAR SI EL NUMERO DE SERIE DE FUNDIDO ESTÁ DUPLICADO DENTRO DE LAS OFS RESERVADAS, ABIERTAS O CERRADAS 
+            consulta0 = f"SELECT NumeroOrden, CodigoComponente FROM PARTMAT WITH (NOLOCK) WHERE (PARTMAT.NSerieMaterial LIKE ?)"
+            #consulta0 = 'SELECT COUNT(*) FROM PARTMAT WHERE NSerieMaterial LIKE ?'
+            cursor.execute(consulta0, [SER_FUN])
+            resultado = cursor.fetchone()[0]
+            OF = str(resultado[0])
+            Codi_Art = str(resultado[1])
+            logo(Codi_Art)
+            hwnd = win32gui.FindWindow(None, 'Gestor de Aplicaciones Comerciales e Industriales')
+            #ventanaIDS = pygetwindow.getWindowsWithTitle('Inicio de trabajo OF')
+            if hwnd == 0:
+                shortcut_path = r"C:\Users\taller20\Desktop\IDSWIN.lnk"
+                os.startfile(shortcut_path)
+                time.sleep(5)
+                pyautogui.click(x=800, y=450)
+                time.sleep(7)
+                pyautogui.click(x=150, y=40)
+                time.sleep(0.2)
+                pyautogui.click(x=150, y=270)                      
+                time.sleep(0.2)
+                pyautogui.click(x=900, y=340)
+                time.sleep(0.2)   
+                pyautogui.click(x=900, y=380)          
+                pyperclip.copy(OF)
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('ctrl', 'v')
+                pyautogui.hotkey('tab')
+                pyperclip.copy(OF)
+                pyautogui.hotkey('ctrl', 'v')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('enter')
+                time.sleep(4)
+                pyautogui.click(x=500, y=50)
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('tab')
+                pyautogui.hotkey('enter')
+                time.sleep(5)
+        except:
+            messagebox.showerror('ERROR', "ERROR AL INTENTAR IMPRIMIR LA OF\nAVISA A INGENIERÍA")
+            
 def logo(archivo):
     archivo=archivo + '.jpg'
     
@@ -264,14 +323,6 @@ def buscar_y_pegar(valor,archivo):
         hwnd = win32gui.FindWindow(None, 'Inicio de trabajo OF')
         #ventanaIDS = pygetwindow.getWindowsWithTitle('Inicio de trabajo OF')
         if hwnd == 0:
-            '''
-            archivo=archivo + '.jpg'
-            carpeta=r"\\srv5\Maquinas\Documentacion NGV's\HOJAS DE REGISTRO UNIFICADAS\LOGOS"
-            ruta_original = os.path.join(carpeta, archivo)
-            ruta_destino = os.path.join(carpeta, "logo.jpg")
-            shutil.copy(ruta_original, ruta_destino)
-            time.sleep(0.5)
-            '''
             print(archivo)
             logo(archivo)
             shortcut_path = r"C:\Users\taller20\Desktop\PISTOLA.lnk"
@@ -458,7 +509,9 @@ def marcar(KH,OF):
                 resultado = cursor.fetchone() #ESTA FUNCIÓN SACA LA OF, EL CÓDIGO ARTÍCULO Y EL SN DE FUNDIDO
                 MAXHORI = int(resultado[1])
                 if CONTAHORI >= MAXHORI:
-                   messagebox.showerror('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA HORIZONTAL\n¡ATENCIÓN! PIEZA NO MARCADA, ACEPTAR PARA MARCAR")
+                    thread_control_cambio = threading.Thread(target=messagebox.showerror, args=('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA HORIZONTAL\n¡ATENCIÓN!\nCOMPRUEBA QUE LA PIEZA SE HA MARCADO CORRECTAMENTE"))
+                    thread_control_cambio.start()
+                    #messagebox.showerror('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA HORIZONTAL\n¡ATENCIÓN! PIEZA NO MARCADA, ACEPTAR PARA MARCAR")
                 CONTAHORI = str(CONTAHORI)
                 consulta = 'UPDATE ProgramaMarcado SET Fichero = ? WHERE PartNumber=?'
                 cursor.execute(consulta, CONTAHORI, 'CONTAHORI')
@@ -474,7 +527,9 @@ def marcar(KH,OF):
                 resultado = cursor.fetchone() #ESTA FUNCIÓN SACA LA OF, EL CÓDIGO ARTÍCULO Y EL SN DE FUNDIDO
                 MAXVERT = int(resultado[1])
                 if CONTAVERT >= MAXVERT:
-                   messagebox.showerror('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA VERTICAL\n¡ATENCIÓN! PIEZA NO MARCADA, ACEPTAR PARA MARCAR")
+                    thread_control_cambio = threading.Thread(target=messagebox.showerror, args=('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA VERTICAL\n¡ATENCIÓN!\nCOMPRUEBA QUE LA PIEZA SE HA MARCADO CORRECTAMENTE"))
+                    thread_control_cambio.start()
+                    #messagebox.showerror('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA VERTICAL\n¡ATENCIÓN! PIEZA NO MARCADA, ACEPTAR PARA MARCAR")
                 CONTAVERT = str(CONTAVERT)
                 consulta = 'UPDATE ProgramaMarcado SET Fichero = ? WHERE PartNumber=?'
                 cursor.execute(consulta, CONTAVERT, 'CONTAVERT')
@@ -661,7 +716,7 @@ def no_oficial(coditex):
                 KH = resultado2[0]
 
         except:
-            messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE \n OF NO RESERVADA")
+            messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE\nAVISA A INGENIERÍA")
             return
     if doble_programa(KH) != True:
         return
@@ -717,7 +772,7 @@ def soloHOJA(coditex):
                 KH = resultado2[0]
 
         except:
-            messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE \n OF NO RESERVADA")
+            messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE\nAVISA A INGENIERÍA")
             return
 
     imprimir_excel(OF,KH)
@@ -767,7 +822,7 @@ def soloOF(coditex):
                 KH = resultado2[0]
 
         except:
-            messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE \n OF NO RESERVADA")
+            messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE\nAVISA A INGENIERÍA")
             return
 
     IDS=buscar_y_pegar('SER ' + SER_FUN,Codi_Art)#Abre la OF y la Imprime, necesita el SER y el codigo de articulo para el logo de color
@@ -780,21 +835,29 @@ def oficial(coditex):
     SER_FUN = coditex.replace('SER', '')
     SER_FUN = SER_FUN.replace(' ', '')
 
+    if '16720ZC2' in SER_FUN:
+        messagebox.showerror('ERROR', "Nº DE SERIE EN CUARENTENA\nMARCA OTRA PIEZA Y AVISA A INGENIERÍA")
+        return
+
     with db_conn_po('ODBC Driver 17 for SQL Server', BD, BD_BD, BD_USR, BD_PWD) as cursor:
         try:
             # COMPROBAR SI EL NUMERO DE SERIE DE FUNDIDO ESTÁ DUPLICADO DENTRO DE LAS OFS RESERVADAS
-            consulta0 = f"SELECT COUNT(*) FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.NSerieMaterial LIKE ?) AND (ORDEN.Situacion = 'Reservada')"
+            consulta0 = f"SELECT COUNT(*) FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.NSerieMaterial LIKE ?)"
             #consulta0 = 'SELECT COUNT(*) FROM PARTMAT WHERE NSerieMaterial LIKE ?'
             cursor.execute(consulta0, [SER_FUN])
             resultado = cursor.fetchone()[0]
 
             if resultado==1:
                 #SI SOLO HAY UNA, EXTRAER OF, CÓDIGO ARTÍCULO Y PARTNUMBER DENTRO DE LAS RESERVADAS
-                consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.NSerieMaterial LIKE ?) AND (ORDEN.Situacion = 'Reservada')"
+                consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente, ORDEN.Situacion FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.NSerieMaterial LIKE ?)"
                 cursor.execute(consulta1, [SER_FUN])
                 resultado = cursor.fetchone()
                 OF=str(resultado[0])
                 Codi_Art=str(resultado[1])
+                situacion = str(resultado[2]).upper()
+                if situacion != 'RESERVADA':
+                    messagebox.showerror('ERROR', f"LA OF ESTÁ EN SITUACIÓN {situacion}\nAVISAR A INGENIERÍA")
+                    return
                 consulta2=f"SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?"
                 cursor.execute(consulta2, [Codi_Art])
                 resultado2 = cursor.fetchone()
@@ -818,7 +881,7 @@ def oficial(coditex):
                 resultado2 = cursor.fetchone()
                 KH = resultado2[0]
             elif resultado==0:
-                messagebox.showerror('ERROR', "OF NO RESERVADA")
+                messagebox.showerror(f'ERROR', "OF {OF}")
                 return
 
         except:
@@ -884,7 +947,7 @@ boton_cerrar = tk.Button(ventana, text='CERRAR', width=10, height=2, command=ven
 boton_cerrar.place(x=200, y=155)
 
 # Botón SOLO OF
-boton_OF = tk.Button(ventana, text='OF', width=12, height=1, command=lambda: soloOF(codigo_textbox.get()))
+boton_OF = tk.Button(ventana, text='OF', width=12, height=1, command=lambda: ofids(codigo_textbox.get()))
 boton_OF.place(x=300, y=150)
 
 # Botón SOLO HOJA DE REGISTRO
