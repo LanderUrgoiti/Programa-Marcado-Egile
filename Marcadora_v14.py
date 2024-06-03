@@ -15,6 +15,7 @@ import win32api
 import win32gui
 import openpyxl
 import shutil
+import threading
 
 # dirección IP y puerto del dispositivo
 ip_address = '192.168.10.179'

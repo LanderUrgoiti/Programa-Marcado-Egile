@@ -191,7 +191,7 @@ def registro_marcado(KH,OF,MARCA,trama_regi,REV):
     try:
         with db_conn_po('ODBC Driver 17 for SQL Server', SISTE, SISTE_BD, SISTE_USR, SISTE_PWD) as cursor:
                     # We truncate the table
-                    hora=datetime.datetime.now()
+                    hora=time.time()
                     OFint=int(OF)
                     Registro = f'({KH}, {OFint}, {hora}, {MARCA})'
                     print(Registro)
