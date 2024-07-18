@@ -51,29 +51,41 @@ BD_BD = 'IDSDMP1'
 BD_USR = 'lecturaIDS'
 BD_PWD = '0'
 
-def alineamiento(stop_flag, carpeta, reloj):
+def control(vert, hori):
 
-    while not stop_flag._flag:
-
-        archivos = os.listdir(carpeta)
-        archivo_mas_reciente = max(archivos, key=lambda archivo: os.path.getmtime(os.path.join(carpeta, archivo)))
-        fecha_mas_reciente = os.path.getmtime(os.path.join(carpeta, archivo_mas_reciente))
-        ahora  = time.time()
-        diff = ahora-fecha_mas_reciente
-        horas, segundos_restantes = divmod(diff, 3600)
-        minutos, segundos = divmod(segundos_restantes, 60)
-        #minutos, segundos_restantes = divmod(diff, 60)
-        horas = int(horas)
-        minutos=int(minutos)
-        segundos = int(segundos)
-        timer = '{:02d}:{:02d}:{:02d}'.format(horas, minutos, segundos) 
-        if horas>7:
-            reloj.config(text=timer,fg='red')
-        else:
-            reloj.config(text=timer,fg='black')
-
+    while True:
+        try:
+            with db_conn_po('ODBC Driver 17 for SQL Server', SISTE, SISTE_BD, SISTE_USR, SISTE_PWD) as cursor:
+                hora=datetime.datetime.now()
+                consulta_v = f"SELECT TOP 1 FechaMarcado FROM RegistroMarcado WHERE PartNumber ='VERTICAL' AND TipoMarcado = 'INSPECCIÓN DE MARCADO' ORDER BY FechaMarcado DESC"
+                cursor.execute(consulta_v)
+                resultado_v = cursor.fetchone()[0]
+                dt = resultado_v.astype('datetime64[us]').astype(datetime)
+                ulltima_v = dt.timestamp()
+                diff = (hora-ulltima_v)
+                horas, restantes = divmod(diff, 3600)
+                #minutos, segundos = divmod(restantes, 60)
+                #minutos=int(minutos)
+                #segundos_restantes = int(segundos_restantes)
+                #timer = '{:02d}:{:02d}'.format(minutos, segundos_restantes) 
+                if horas>23:
+                    vert.config(text='PENDIENTE',fg='red')
+                else:
+                    vert.config(text='OK',fg='black')
+                consulta_h = f"SELECT TOP 1 FechaMarcado FROM RegistroMarcado WHERE PartNumber ='HORIZONTAL' AND TipoMarcado = 'INSPECCIÓN DE MARCADO' ORDER BY FechaMarcado DESC"
+                cursor.execute(consulta_v)
+                resultado_h = cursor.fetchone()[0]
+                dt = resultado_h.astype('datetime64[us]').astype(datetime)
+                ulltima_h = dt.timestamp()
+                diff = (hora-ulltima_h)
+                horas, restantes = divmod(diff, 3600)
+                if horas>23:
+                    hori.config(text='PENDIENTE',fg='red')
+                else:
+                    hori.config(text='OK',fg='black')
+        except Exception as error:
+            print (f'Error en la base de datos : ', error)
         time.sleep(1)
-        #print(fecha_mas_reciente)
 
 def registrar(operario, marcadora, estado, comentario,venta_inspec):
     if not operario or not marcadora or not estado:
@@ -89,6 +101,7 @@ def registrar(operario, marcadora, estado, comentario,venta_inspec):
         except Exception as error:
             print (f'Error en la base de datos : ', error)
         venta_inspec.destroy()
+
 def inspeccion():
     char_limit=100
 
@@ -1055,7 +1068,6 @@ codigo_textbox.place(x=250, y=110, width=250, height=50, anchor=tk.CENTER)
 codigo_textbox.focus_set()
 codigo_textbox.bind("<FocusIn>", lambda event: codigo_textbox.bind('<Return>', lambda event: oficial(codigo_textbox.get())))
 
-
 # label 2
 #resultado_label2 = tk.Label(ventana, text='', font=('Arial', 10), justify='left')
 #resultado_label2.place(x=250, y=220, anchor=tk.CENTER)
@@ -1071,13 +1083,22 @@ resultado_label_egile.place(x=70, y=40, anchor=tk.CENTER)
 
 #VERIFICACIÓN ESTADO MARCAJE
 
-INSPE_LABEL = tk.Label(ventana,text='INSPECCIÓN ESTADO DE MARCAJE->', font=('Arial', 10, 'bold'),justify='left')
-INSPE_LABEL.place(x=60, y=250, anchor=tk.SW)
+INSPE_LABEL = tk.Label(ventana,text='INSPECCIÓN ESTADO DE MARCAJE', font=('Arial', 10, 'bold'),justify='left')
+INSPE_LABEL.place(x=20, y=260, anchor=tk.SW)
 
-INSPE_TIMER = tk.Label(ventana,text='PENDIENTE', font=('Arial', 10, 'bold'), fg='red',justify='left')
-INSPE_TIMER.place(x=300, y=250, anchor=tk.SW)
+INSPE_LABEL_VERT = tk.Label(ventana,text='VERTICAL->', font=('Arial', 10, 'bold'),justify='left')
+INSPE_LABEL_VERT.place(x=260, y=245, anchor=tk.SW)
 
-thread_alineamiento = threading.Thread(target=alineamiento, args=(INSPE_TIMER))
-thread_alineamiento.start()
+INSPE_TIMER_VERT = tk.Label(ventana,text='PENDIENTE', font=('Arial', 10, 'bold'), fg='red',justify='left')
+INSPE_TIMER_VERT.place(x=355, y=245, anchor=tk.SW)
+
+INSPE_LABEL_HORI = tk.Label(ventana,text='HORIZONTAL->', font=('Arial', 10, 'bold'),justify='left')
+INSPE_LABEL_HORI.place(x=250, y=275, anchor=tk.SW)
+
+INSPE_TIMER_HORI = tk.Label(ventana,text='PENDIENTE', font=('Arial', 10, 'bold'), fg='red',justify='left')
+INSPE_TIMER_HORI.place(x=355, y=275, anchor=tk.SW)
+
+#thread_alineamiento = threading.Thread(target=control, args=(INSPE_TIMER_VERT, INSPE_TIMER_HORI))
+#thread_alineamiento.start()
 
 ventana.mainloop()
