@@ -17,6 +17,8 @@ import win32gui
 import openpyxl
 import shutil
 import threading
+import qrcode
+from openpyxl.drawing.image import Image as Im2
 
 # dirección IP y puerto del dispositivo
 ip_address = '192.168.10.179'
@@ -308,15 +310,32 @@ def imprimir_excel(ordenfabri,partnumber):
         carpeta=r"\\srv5\Maquinas\Documentacion NGV's\HOJAS DE REGISTRO UNIFICADAS"
         ruta_archivo = os.path.join(r"\\srv5\Maquinas\Documentacion NGV's\HOJAS DE REGISTRO UNIFICADAS", nombre_archivo)
 
+
         for filename in os.listdir(carpeta):
             if str(partnumber) in filename:
-                ruta_archivo = os.path.join(carpeta, filename)
 
+                ruta_archivo = os.path.join(carpeta, filename)
+                ruta_programa = f'TNC:\manual\{ordenfabri}.H'
                 # Abre el archivo Excel
                 libro = openpyxl.load_workbook(ruta_archivo)
                 hoja = libro.active
 
-                # Pega el valor en la casilla J1
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_L,
+                    box_size=3,
+                    border=1,
+                )
+                qr.add_data(ruta_programa)
+                qr.make(fit=True)
+
+                # Crear la imagen del código QR
+                img = qr.make_image(fill='black', back_color='white')
+                img_path = "qrcode.png"
+                img.save(img_path)
+                img_to_insert = Im2(img_path)
+                hoja.add_image(img_to_insert, 'J5')
+
                 hoja.cell(row=1, column=10, value=ordenfabri)
 
                 libro.save(r"\\srv5\Maquinas\Documentacion NGV's\HOJAS DE REGISTRO UNIFICADAS" + 'Temp.xlsx')
@@ -1046,8 +1065,9 @@ boton_reset.place(x=100, y=155)
 boton_reset.bind("<FocusIn>", lambda event: boton_reset.bind("<Return>", lambda event=None: boton_reset.invoke()))
 
 # Botón de cerrar
-boton_cerrar = tk.Button(ventana, text='INSPECCIÓN', width=10, height=2, command=lambda: inspeccion())
-boton_cerrar.place(x=300, y=155)
+boton_INS = tk.Button(ventana, text='INSPECCIÓN', width=10, height=2, command=lambda: inspeccion())
+boton_INS.place(x=300, y=155)
+boton_INS.bind("<FocusIn>", lambda event: boton_INS.bind("<Return>", lambda event=None: boton_INS.invoke()))
 
 # Botón SOLO OF
 boton_OF = tk.Button(ventana, text='OF', width=12, height=1, command=lambda: ofids(codigo_textbox.get()))
@@ -1058,6 +1078,8 @@ boton_OF.bind("<FocusIn>", lambda event: boton_OF.bind("<Return>", lambda event=
 # Botón SOLO HOJA DE REGISTRO
 boton_HR = tk.Button(ventana, text='HOJA REGISTRO', width=12, height=1, command=lambda: soloHOJA(codigo_textbox.get()))
 boton_HR.place(x=195, y=180)
+boton_HR.bind("<FocusIn>", lambda event: boton_HR.bind("<Return>", lambda event=None: boton_HR.invoke()))
+
 
 # label 1
 resultado_label1 = tk.Label(ventana, text='SER ->', font=('Arial', 20, 'bold'), justify='left')
