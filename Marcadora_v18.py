@@ -367,13 +367,13 @@ def ofids(coditex):
                 if hwnd == 0:
                     shortcut_path = r"C:\Users\taller20\Desktop\IDSWIN.lnk"
                     os.startfile(shortcut_path)
-                    time.sleep(7)
+                    time.sleep(60)
                 elif hwnd != 0:
                     win32gui.ShowWindow(hwnd, 5)
                     win32gui.SetForegroundWindow(hwnd)
 
                 pyautogui.click(x=800, y=450)
-                time.sleep(12)
+                time.sleep(60)
                 pyautogui.click(x=150, y=40)
                 time.sleep(0.7)
                 pyautogui.click(x=150, y=270)                      
@@ -605,7 +605,6 @@ def marcar(KH,OF):
             ASSY=resultado[7]    
             REV=resultado[8]
 
-
             # CONTADOR DE MARCAJES 
             if KH in ['KH18990', 'KH18995']:
                 consulta = 'SELECT PartNumber, Fichero FROM ProgramaMarcado WITH (NOLOCK) WHERE PartNumber LIKE ?'
@@ -663,20 +662,7 @@ def marcar(KH,OF):
     response_bytes = client_socket.recv(1024)
     hex_string = ' '.join(['{:02x}'.format(byte) for byte in response_bytes])
 
-    '''
-    if hex_string == ACK:
-        resultado_label2.config(text='Programa cargado y Marcadora lista')
-    elif hex_string == NACK:
-        resultado_label2.config(text='Marcadora no disponible')
-    else:
-        resultado_label2.config(text='ERROR Marcado')
-        '''
-
     client_socket.close()
-
-    # cierra la conexión con el dispositivo
-
-    # MARCAR TEXTO
 
     LT = '0c'
 
@@ -807,24 +793,26 @@ def no_oficial(coditex):
                 cursor.execute(consulta2, [Codi_Art])
                 resultado2 = cursor.fetchone()
                 KH = resultado2[0]
+            else:
+                messagebox.showerror(f'ERROR', "HAY UN PROBLEMA CON ESTA ORDEN DE FABRICACIÓN\nSEPARAR ESTA PIEZA Y AVISAR A INGENIERÍA")
+                return
+
                         
-            elif resultado >= 2:
-                PN_FUN=part_rep()
-
-                consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
-                cursor.execute(consulta3, [PN_FUN])
-                resultado3 = cursor.fetchone()
-                CO_MA = resultado3[0]
-
-                consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
-                cursor.execute(consulta1, [SER_FUN])
-                resultado = cursor.fetchone()
-                OF=str(resultado[0])
-                Codi_Art=str(resultado[1])
-                consulta2='SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?'
-                cursor.execute(consulta2, [Codi_Art])
-                resultado2 = cursor.fetchone()
-                KH = resultado2[0]
+            #elif resultado >= 2:
+            #    PN_FUN=part_rep()
+            #    consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
+            #    cursor.execute(consulta3, [PN_FUN])
+            #    resultado3 = cursor.fetchone()
+            #    CO_MA = resultado3[0]
+            #    consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
+            #    cursor.execute(consulta1, [SER_FUN])
+            #    resultado = cursor.fetchone()
+            #    OF=str(resultado[0])
+            #    Codi_Art=str(resultado[1])
+            #    consulta2='SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?'
+            #    cursor.execute(consulta2, [Codi_Art])
+            #    resultado2 = cursor.fetchone()
+            #    KH = resultado2[0]
 
         except:
             messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE\nAVISA A INGENIERÍA")
@@ -863,24 +851,25 @@ def soloHOJA(coditex):
                 cursor.execute(consulta2, [Codi_Art])
                 resultado2 = cursor.fetchone()
                 KH = resultado2[0]
+            else:
+                messagebox.showerror(f'ERROR', "HAY UN PROBLEMA CON ESTA ORDEN DE FABRICACIÓN\nSEPARAR ESTA PIEZA Y AVISAR A INGENIERÍA")
+                return
                         
-            elif resultado >= 2:
-                PN_FUN=part_rep()
-
-                consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
-                cursor.execute(consulta3, [PN_FUN])
-                resultado3 = cursor.fetchone()
-                CO_MA = resultado3[0]
-
-                consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
-                cursor.execute(consulta1, [SER_FUN])
-                resultado = cursor.fetchone()
-                OF=str(resultado[0])
-                Codi_Art=str(resultado[1])
-                consulta2='SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?'
-                cursor.execute(consulta2, [Codi_Art])
-                resultado2 = cursor.fetchone()
-                KH = resultado2[0]
+            #elif resultado >= 2:
+            #    PN_FUN=part_rep()
+            #    consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
+            #    cursor.execute(consulta3, [PN_FUN])
+            #    resultado3 = cursor.fetchone()
+            #    CO_MA = resultado3[0]
+            #    consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
+            #    cursor.execute(consulta1, [SER_FUN])
+            #    resultado = cursor.fetchone()
+            #    OF=str(resultado[0])
+            #    Codi_Art=str(resultado[1])
+            #    consulta2='SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?'
+            #    cursor.execute(consulta2, [Codi_Art])
+            #    resultado2 = cursor.fetchone()
+            #    KH = resultado2[0]
 
         except:
             messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE\nAVISA A INGENIERÍA")
@@ -913,24 +902,26 @@ def soloOF(coditex):
                 cursor.execute(consulta2, [Codi_Art])
                 resultado2 = cursor.fetchone()
                 KH = resultado2[0]
+            else:
+                messagebox.showerror(f'ERROR', "HAY UN PROBLEMA CON ESTA ORDEN DE FABRICACIÓN\nSEPARAR ESTA PIEZA Y AVISAR A INGENIERÍA")
+                return
+
                         
-            elif resultado >= 2:
-                PN_FUN=part_rep()
-
-                consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
-                cursor.execute(consulta3, [PN_FUN])
-                resultado3 = cursor.fetchone()
-                CO_MA = resultado3[0]
-
-                consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
-                cursor.execute(consulta1, [SER_FUN])
-                resultado = cursor.fetchone()
-                OF=str(resultado[0])
-                Codi_Art=str(resultado[1])
-                consulta2='SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?'
-                cursor.execute(consulta2, [Codi_Art])
-                resultado2 = cursor.fetchone()
-                KH = resultado2[0]
+            #elif resultado >= 2:
+            #    PN_FUN=part_rep()
+            #    consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
+            #    cursor.execute(consulta3, [PN_FUN])
+            #    resultado3 = cursor.fetchone()
+            #    CO_MA = resultado3[0]
+            #    consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
+            #    cursor.execute(consulta1, [SER_FUN])
+            #    resultado = cursor.fetchone()
+            #    OF=str(resultado[0])
+            #    Codi_Art=str(resultado[1])
+            #    consulta2='SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?'
+            #    cursor.execute(consulta2, [Codi_Art])
+            #    resultado2 = cursor.fetchone()
+            #    KH = resultado2[0]
 
         except:
             messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE\nAVISA A INGENIERÍA")
@@ -945,10 +936,6 @@ def oficial(coditex):
 
     SER_FUN = coditex.replace('SER', '')
     SER_FUN = SER_FUN.replace(' ', '')
-
-    #if '16720ZC2' in SER_FUN:
-    #    messagebox.showerror('ERROR', "Nº DE SERIE EN CUARENTENA\nMARCA OTRA PIEZA Y AVISA A INGENIERÍA")
-    #    return
 
     with db_conn_po('ODBC Driver 17 for SQL Server', BD, BD_BD, BD_USR, BD_PWD) as cursor:
         try:
@@ -966,31 +953,30 @@ def oficial(coditex):
                 OF=str(resultado[0])
                 Codi_Art=str(resultado[1])
                 situacion = str(resultado[2]).upper()
-                if situacion != 'RESERVADA':
-                    messagebox.showerror('ERROR', f"LA OF ESTÁ EN SITUACIÓN {situacion}\nAVISAR A INGENIERÍA")
-                    return
+                #if situacion != 'RESERVADA':
+                #    messagebox.showerror('ERROR', f"LA OF ESTÁ EN SITUACIÓN {situacion}\nAVISAR A INGENIERÍA")
+                #    return
                 consulta2=f"SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?"
                 cursor.execute(consulta2, [Codi_Art])
                 resultado2 = cursor.fetchone()
                 KH = resultado2[0]
-                        
-            elif resultado >= 2:
-                PN_FUN=part_rep()
-                consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
-                cursor.execute(consulta3, [PN_FUN])
-                resultado3 = cursor.fetchone()
-                CO_MA = resultado3[0]
-                consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
-                cursor.execute(consulta1, [SER_FUN])
-                resultado = cursor.fetchone()
-                OF=str(resultado[0])
-                Codi_Art=str(resultado[1])
-                consulta2='SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?'
-                cursor.execute(consulta2, [Codi_Art])
-                resultado2 = cursor.fetchone()
-                KH = resultado2[0]
-            elif resultado==0:
-                messagebox.showerror(f'ERROR', "OF {OF}")
+            #elif resultado >= 2:
+            #    PN_FUN=part_rep()
+            #    consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
+            #    cursor.execute(consulta3, [PN_FUN])
+            #    resultado3 = cursor.fetchone()
+            #    CO_MA = resultado3[0]
+            #    consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
+            #    cursor.execute(consulta1, [SER_FUN])
+            #    resultado = cursor.fetchone()
+            #    OF=str(resultado[0])
+            #    Codi_Art=str(resultado[1])
+            #    consulta2='SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?'
+            #    cursor.execute(consulta2, [Codi_Art])
+            #    resultado2 = cursor.fetchone()
+            #    KH = resultado2[0]
+            else:
+                messagebox.showerror(f'ERROR', "HAY UN PROBLEMA CON ESTA ORDEN DE FABRICACIÓN\nSEPARAR ESTA PIEZA Y AVISAR A INGENIERÍA")
                 return
 
         except:
