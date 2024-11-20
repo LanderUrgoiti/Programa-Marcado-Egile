@@ -62,9 +62,6 @@ def control(vert, hori):
                 consulta_v = f"SELECT TOP 1 FechaMarcado FROM RegistroMarcado WHERE PartNumber ='VERTICAL' AND TipoMarcado = 'INSPECCIÓN DE MARCADO' ORDER BY FechaMarcado DESC"
                 cursor.execute(consulta_v)
                 resultado_v = cursor.fetchone()[0]
-                consulta_v2 = f"SELECT TOP 6 PartNumber FROM RegistroMarcado ORDER BY FechaMarcado DESC"
-                cursor.execute(consulta_v2)
-                resultado_v2 = cursor.fetchall()
                 #dt = resultado_v.astype('datetime64[us]').astype(datetime)
                 #ulltima_v = dt.timestamp()
                 diff = (hora-resultado_v)
@@ -85,15 +82,10 @@ def control(vert, hori):
                 #ulltima_h = dt.timestamp()
                 diff = (hora-resultado_h)
                 #horas, restantes = divmod(diff, 3600)
-                for val in resultado_v2:
-                    if 'KH18990' in val:
-                        if diff.days>0:
-                            hori.config(text='PENDIENTE',fg='red')
-                        else:
-                            hori.config(text='OK',fg='black')
-                        break
-                    else:
-                        INSPE_TIMER_HORI.config(text='')
+                if diff.days>0:
+                    hori.config(text='PENDIENTE',fg='red')
+                else:
+                    hori.config(text='OK',fg='black')
         except Exception as error:
             print (f'Error en la base de datos : ', error)
         time.sleep(1)
