@@ -60,6 +60,9 @@ def control(vert, hori):
                 consulta_v = f"SELECT TOP 1 FechaMarcado FROM RegistroMarcado WHERE PartNumber ='VERTICAL' AND TipoMarcado = 'INSPECCIÓN DE MARCADO' ORDER BY FechaMarcado DESC"
                 cursor.execute(consulta_v)
                 resultado_v = cursor.fetchone()[0]
+                consulta_v2 = f"SELECT TOP 6 PartNumber FROM RegistroMarcado WHERE TipoMarcado = 'OFICIAL' ORDER BY FechaMarcado DESC"
+                cursor.execute(consulta_v2)
+                resultado_v2 = cursor.fetchall()
                 #dt = resultado_v.astype('datetime64[us]').astype(datetime)
                 #ulltima_v = dt.timestamp()
                 diff = (hora-resultado_v)
@@ -74,16 +77,21 @@ def control(vert, hori):
                 else:
                     vert.config(text='OK',fg='black')
                 consulta_h = f"SELECT TOP 1 FechaMarcado FROM RegistroMarcado WHERE PartNumber ='HORIZONTAL' AND TipoMarcado = 'INSPECCIÓN DE MARCADO' ORDER BY FechaMarcado DESC"
-                cursor.execute(consulta_v)
+                cursor.execute(consulta_h)
                 resultado_h = cursor.fetchone()[0]
                 #dt = resultado_h.astype('datetime64[us]').astype(datetime)
                 #ulltima_h = dt.timestamp()
                 diff = (hora-resultado_h)
                 #horas, restantes = divmod(diff, 3600)
-                if diff.days>0:
-                    hori.config(text='PENDIENTE',fg='red')
-                else:
-                    hori.config(text='OK',fg='black')
+                for val in resultado_v2:
+                    if 'KH18990' in val:
+                        if diff.days>0:
+                            hori.config(text='PENDIENTE',fg='red')
+                        else:
+                            hori.config(text='OK',fg='black')
+                        break
+                    else:
+                        INSPE_TIMER_HORI.config(text='')
         except Exception as error:
             print (f'Error en la base de datos : ', error)
         time.sleep(1)
@@ -968,12 +976,10 @@ def oficial(coditex):
                         
             elif resultado >= 2:
                 PN_FUN=part_rep()
-
                 consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
                 cursor.execute(consulta3, [PN_FUN])
                 resultado3 = cursor.fetchone()
                 CO_MA = resultado3[0]
-
                 consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
                 cursor.execute(consulta1, [SER_FUN])
                 resultado = cursor.fetchone()
@@ -1046,8 +1052,9 @@ boton_reset.place(x=100, y=155)
 boton_reset.bind("<FocusIn>", lambda event: boton_reset.bind("<Return>", lambda event=None: boton_reset.invoke()))
 
 # Botón de cerrar
-boton_cerrar = tk.Button(ventana, text='INSPECCIÓN', width=10, height=2, command=lambda: inspeccion())
-boton_cerrar.place(x=300, y=155)
+boton_INS = tk.Button(ventana, text='INSPECCIÓN', width=10, height=2, command=lambda: inspeccion())
+boton_INS.place(x=300, y=155)
+boton_INS.bind("<FocusIn>", lambda event: boton_INS.bind("<Return>", lambda event=None: boton_INS.invoke()))
 
 # Botón SOLO OF
 boton_OF = tk.Button(ventana, text='OF', width=12, height=1, command=lambda: ofids(codigo_textbox.get()))
