@@ -51,38 +51,54 @@ BD_BD = 'IDSDMP1'
 BD_USR = 'lecturaIDS'
 BD_PWD = '0'
 
+def comprobar_apertura(of):
+
+    with db_conn_po('ODBC Driver 17 for SQL Server', BD, BD_BD, BD_USR, BD_PWD) as cursor:
+        try:
+            consulta0 = f"SELECT ORDEN.Situacion FROM ORDEN WITH (NOLOCK) WHERE (ORDEN.Numero LIKE ?)"
+            #consulta0 = 'SELECT COUNT(*) FROM PARTMAT WHERE NSerieMaterial LIKE ?'
+            cursor.execute(consulta0, [of])
+            resultado = cursor.fetchone()
+            #situacion = str(resultado[0])
+            situacion = str(resultado[0]).upper()
+            if situacion =='ABIERTA':
+                return 1
+            else:
+                return 2
+        except:
+            messagebox.showerror('ERROR', "ERROR CONSULTA IDS")
+            return 0    
+
+def on_closing():
+    for bucle in threading.enumerate():
+        if f'CONTROL_MARCADO' in bucle.name:
+            bucle.do_run = False
+    ventana.destroy()
+    
 def control(vert, hori):
 
-    while True:
+    thr = threading.current_thread()
+    thr.do_run = True
+
+    while thr.do_run == True:
         try:
             with db_conn_po('ODBC Driver 17 for SQL Server', SISTE, SISTE_BD, SISTE_USR, SISTE_PWD) as cursor:
                 hora=datetime.datetime.now()
-                consulta_v = f"SELECT TOP 1 FechaMarcado FROM RegistroMarcado WHERE PartNumber ='VERTICAL' AND TipoMarcado = 'INSPECCIÓN DE MARCADO' ORDER BY FechaMarcado DESC"
+                consulta_v = f"SELECT TOP 1 FechaMarcado FROM RegistroMarcado WHERE PartNumber ='VERTICAL' AND Orden = '0' ORDER BY FechaMarcado DESC"
                 cursor.execute(consulta_v)
                 resultado_v = cursor.fetchone()[0]
                 consulta_v2 = f"SELECT TOP 6 PartNumber FROM RegistroMarcado WHERE TipoMarcado = 'OFICIAL' ORDER BY FechaMarcado DESC"
                 cursor.execute(consulta_v2)
                 resultado_v2 = cursor.fetchall()
-                #dt = resultado_v.astype('datetime64[us]').astype(datetime)
-                #ulltima_v = dt.timestamp()
                 diff = (hora-resultado_v)
-                #horas, restantes = divmod(diff, 3600)
-                #minutos, segundos = divmod(restantes, 60)
-                #minutos=int(minutos)
-                #segundos_restantes = int(segundos_restantes)
-                #timer = '{:02d}:{:02d}'.format(minutos, segundos_restantes) 
-                #if horas>23:
                 if diff.days>0:
                     vert.config(text='PENDIENTE',fg='red')
                 else:
                     vert.config(text='OK',fg='black')
-                consulta_h = f"SELECT TOP 1 FechaMarcado FROM RegistroMarcado WHERE PartNumber ='HORIZONTAL' AND TipoMarcado = 'INSPECCIÓN DE MARCADO' ORDER BY FechaMarcado DESC"
+                consulta_h = f"SELECT TOP 1 FechaMarcado FROM RegistroMarcado WHERE PartNumber ='HORIZONTAL' AND Orden = '0' ORDER BY FechaMarcado DESC"
                 cursor.execute(consulta_h)
                 resultado_h = cursor.fetchone()[0]
-                #dt = resultado_h.astype('datetime64[us]').astype(datetime)
-                #ulltima_h = dt.timestamp()
                 diff = (hora-resultado_h)
-                #horas, restantes = divmod(diff, 3600)
                 for val in resultado_v2:
                     if 'KH18990' in val:
                         if diff.days>0:
@@ -106,7 +122,7 @@ def registrar(operario, marcadora, estado, comentario,venta_inspec):
             with db_conn_po('ODBC Driver 17 for SQL Server', SISTE, SISTE_BD, SISTE_USR, SISTE_PWD) as cursor:
                 hora=datetime.datetime.now()
                 consulta2 = f'INSERT INTO RegistroMarcado (PartNumber, Orden, Operario, FechaMarcado, TipoMarcado, Notas) VALUES (?, ?, ?, ?, ?, ?)'
-                cursor.execute(consulta2, marcadora, '000000', int(operario), hora, 'INSPECCIÓN DE MARCADO' , 'NOTAS: ' + str(comentario) )
+                cursor.execute(consulta2, marcadora, '000000', int(operario), hora, 'INSPECCIÓN: ' + str(estado) ,'NOTAS: ' + str(comentario) )
         except Exception as error:
             print (f'Error en la base de datos : ', error)
         venta_inspec.destroy()
@@ -400,14 +416,6 @@ def ofids(coditex):
                 pyautogui.hotkey('tab')
                 pyautogui.hotkey('tab')
                 pyautogui.hotkey('enter')
-                #time.sleep(6)
-                #pyautogui.click(x=500, y=50)
-                #pyautogui.hotkey('tab')
-                #pyautogui.hotkey('tab')
-                #pyautogui.hotkey('tab')
-                #pyautogui.hotkey('tab')
-                #pyautogui.hotkey('tab')
-                #pyautogui.hotkey('enter')
         except:
             messagebox.showerror('ERROR', "ERROR AL INTENTAR IMPRIMIR LA OF\nAVISA A INGENIERÍA")
             
@@ -434,7 +442,7 @@ def buscar_y_pegar(valor,archivo,of):
             print(archivo)
             logo(archivo)
             #shortcut_path = r"C:\Users\taller20\Desktop\PISTOLA.lnk"
-            shortcut_path = os.path.join(os.path.expanduser("~"), "Desktop","IDSWIN.lnk")
+            shortcut_path = os.path.join(os.path.expanduser("~"), "Desktop","PISTOLA.lnk")
             os.startfile(shortcut_path)
             time.sleep(5)
             pyautogui.click(x=100, y=50)
@@ -443,7 +451,7 @@ def buscar_y_pegar(valor,archivo,of):
             pyautogui.hotkey('ctrl', 'v') # Pegar el valor
             time.sleep(0.2)
             pyautogui.hotkey('enter')
-            time.sleep(7)
+            time.sleep(12)
 
             #return 1
         elif hwnd !=0:          
@@ -457,31 +465,37 @@ def buscar_y_pegar(valor,archivo,of):
             pyautogui.hotkey('ctrl', 'v') # Pegar el valor
             time.sleep(0.2)
             pyautogui.hotkey('enter')
-            time.sleep(7)
+            time.sleep(12)
 
-            #return 1
-        with db_conn_po('ODBC Driver 17 for SQL Server', BD, BD_BD, BD_USR, BD_PWD) as cursor:
-            try:
-                consulta0 = f"SELECT ORDEN.Situacion FROM ORDEN WITH (NOLOCK) WHERE (ORDEN.Numero LIKE ?)"
-                #consulta0 = 'SELECT COUNT(*) FROM PARTMAT WHERE NSerieMaterial LIKE ?'
-                cursor.execute(consulta0, [of])
-                resultado = cursor.fetchone()
-                #situacion = str(resultado[0])
-                situacion = str(resultado[0]).upper()
-                if situacion =='ABIERTA':
-                    return 1
-                else:
-                    return 0
+        apertura = comprobar_apertura(of) 
+        
+        #if apertura == 0:
+        #    respuesta = messagebox.askyesno("ATENCIÓN", f"ESTÁS APUNTO DE BORRAR LA ORDEN DE FABRICACIÓN {nof}\n¿ESTÁS SEGURO DE QUERER BORRARLA?")
 
-            except:
-                messagebox.showerror('ERROR', "ERROR IDS")
-                return 0    
-    
+    #if respuesta:
 
+        return apertura   
+
+        #    #return 1
+        #with db_conn_po('ODBC Driver 17 for SQL Server', BD, BD_BD, BD_USR, BD_PWD) as cursor:
+        #    try:
+        #        consulta0 = f"SELECT ORDEN.Situacion FROM ORDEN WITH (NOLOCK) WHERE (ORDEN.Numero LIKE ?)"
+        #        #consulta0 = 'SELECT COUNT(*) FROM PARTMAT WHERE NSerieMaterial LIKE ?'
+        #        cursor.execute(consulta0, [of])
+        #        resultado = cursor.fetchone()
+        #        #situacion = str(resultado[0])
+        #        situacion = str(resultado[0]).upper()
+        #        if situacion =='ABIERTA':
+        #            return 1
+        #        else:
+        #            messagebox.showerror('ERROR', "ERROR IDS\nLA ORDEN NO SE HA ABIERTO")
+        #            return 0
+        #    except:
+        #        messagebox.showerror('ERROR', "ERROR IDS")
+        #        return 0    
     except:
         messagebox.showerror('ERROR', "ERROR IDS")
         return 0
-    
 
 def db_conn_po(driver,server,database,user,password):
     """Generate a database connection with pyodbc
@@ -613,8 +627,8 @@ def marcar(KH,OF):
             MFR = resultado[4]
             SER = resultado[5]
             PNR = resultado[6]
-            ASSY=resultado[7]    
-            REV=resultado[8]
+            ASSY = resultado[7]    
+            REV = resultado[8]
 
             # CONTADOR DE MARCAJES 
             if KH in ['KH18990', 'KH18995']:
@@ -866,22 +880,6 @@ def soloHOJA(coditex):
                 messagebox.showerror(f'ERROR', "HAY UN PROBLEMA CON ESTA ORDEN DE FABRICACIÓN\nSEPARAR ESTA PIEZA Y AVISAR A INGENIERÍA")
                 return
                         
-            #elif resultado >= 2:
-            #    PN_FUN=part_rep()
-            #    consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
-            #    cursor.execute(consulta3, [PN_FUN])
-            #    resultado3 = cursor.fetchone()
-            #    CO_MA = resultado3[0]
-            #    consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
-            #    cursor.execute(consulta1, [SER_FUN])
-            #    resultado = cursor.fetchone()
-            #    OF=str(resultado[0])
-            #    Codi_Art=str(resultado[1])
-            #    consulta2='SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?'
-            #    cursor.execute(consulta2, [Codi_Art])
-            #    resultado2 = cursor.fetchone()
-            #    KH = resultado2[0]
-
         except:
             messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE\nAVISA A INGENIERÍA")
             return
@@ -916,24 +914,6 @@ def soloOF(coditex):
             else:
                 messagebox.showerror(f'ERROR', "HAY UN PROBLEMA CON ESTA ORDEN DE FABRICACIÓN\nSEPARAR ESTA PIEZA Y AVISAR A INGENIERÍA")
                 return
-
-                        
-            #elif resultado >= 2:
-            #    PN_FUN=part_rep()
-            #    consulta3=f"SELECT Codigo FROM ARTICULO WITH (NOLOCK) WHERE CodigoAlternativo LIKE ?"
-            #    cursor.execute(consulta3, [PN_FUN])
-            #    resultado3 = cursor.fetchone()
-            #    CO_MA = resultado3[0]
-            #    consulta1 = f"SELECT PARTMAT.NumeroOrden, PARTMAT.CodigoComponente FROM PARTMAT WITH (NOLOCK) INNER JOIN ORDEN WITH (NOLOCK) ON PARTMAT.NumeroOrden = ORDEN.Numero WHERE (PARTMAT.CodigoMaterial={CO_MA}) AND (PARTMAT.NSerieMaterial LIKE ?)"
-            #    cursor.execute(consulta1, [SER_FUN])
-            #    resultado = cursor.fetchone()
-            #    OF=str(resultado[0])
-            #    Codi_Art=str(resultado[1])
-            #    consulta2='SELECT CodigoAlternativo FROM ARTICULO WITH (NOLOCK) WHERE CODIGO LIKE ?'
-            #    cursor.execute(consulta2, [Codi_Art])
-            #    resultado2 = cursor.fetchone()
-            #    KH = resultado2[0]
-
         except:
             messagebox.showerror('ERROR', "NO SE ENCUENTRA EL NÚMERO DE SERIE\nAVISA A INGENIERÍA")
             return
@@ -941,7 +921,6 @@ def soloOF(coditex):
     IDS=buscar_y_pegar('SER ' + SER_FUN,Codi_Art, OF)#Abre la OF y la Imprime, necesita el SER y el codigo de articulo para el logo de color
     if IDS==0:
         return
-
 
 def oficial(coditex):
 
@@ -996,9 +975,16 @@ def oficial(coditex):
     if doble_programa(KH) != True:
         return
     
-    IDS=buscar_y_pegar('SER ' + SER_FUN,Codi_Art,OF)#Abre la OF y la Imprime, necesita el SER y el codigo de articulo para el logo de color
-    if IDS==0:
-        return
+    IDS=buscar_y_pegar('SER ' + SER_FUN,Codi_Art,OF)
+    #IDS = 2
+    #while IDS == 2:
+    #    IDS=buscar_y_pegar('SER ' + SER_FUN,Codi_Art,OF)#Abre la OF y la Imprime, necesita el SER y el codigo de articulo para el logo de color
+    #    if IDS==2:
+    #        respuesta = messagebox.askyesno("ERROR", "LA ORDEN NO SE HA ABIERTO\n¿VOLVER A COMPORBARLO?")
+    #        if not respuesta:
+    #            IDS = 0
+    #    elif IDS==0:
+    #        return 
     
     #IMPRIMIR HOJA DE REGISTRO
 
@@ -1021,26 +1007,27 @@ def oficial(coditex):
 ventana = tk.Tk()
 ventana.geometry('450x300+300+300')
 ventana.title('PROGRAMA DE MARCADO')
+ventana.protocol("WM_DELETE_WINDOW", on_closing)
 
 # Botón REPETIR MARCADO
 boton_reset = tk.Button(ventana, text='REPETIR\nMARCADO', width=10, height=2, command=lambda: no_oficial(codigo_textbox.get()))
 boton_reset.place(x=100, y=155)
 boton_reset.bind("<FocusIn>", lambda event: boton_reset.bind("<Return>", lambda event=None: boton_reset.invoke()))
 
-# Botón de cerrar
-boton_INS = tk.Button(ventana, text='INSPECCIÓN', width=10, height=2, command=lambda: inspeccion())
-boton_INS.place(x=300, y=155)
-boton_INS.bind("<FocusIn>", lambda event: boton_INS.bind("<Return>", lambda event=None: boton_INS.invoke()))
-
 # Botón SOLO OF
 boton_OF = tk.Button(ventana, text='OF', width=12, height=1, command=lambda: ofids(codigo_textbox.get()))
 boton_OF.place(x=195, y=150)
 boton_OF.bind("<FocusIn>", lambda event: boton_OF.bind("<Return>", lambda event=None: boton_OF.invoke()))
 
-
 # Botón SOLO HOJA DE REGISTRO
 boton_HR = tk.Button(ventana, text='HOJA REGISTRO', width=12, height=1, command=lambda: soloHOJA(codigo_textbox.get()))
 boton_HR.place(x=195, y=180)
+boton_HR.bind("<FocusIn>", lambda event: boton_HR.bind("<Return>", lambda event=None: boton_HR.invoke()))
+
+# Botón de cerrar
+boton_INS = tk.Button(ventana, text='INSPECCIÓN', width=10, height=2, command=lambda: inspeccion())
+boton_INS.place(x=300, y=155)
+boton_INS.bind("<FocusIn>", lambda event: boton_INS.bind("<Return>", lambda event=None: boton_INS.invoke()))
 
 # label 1
 resultado_label1 = tk.Label(ventana, text='SER ->', font=('Arial', 20, 'bold'), justify='left')
@@ -1082,7 +1069,7 @@ INSPE_LABEL_HORI.place(x=250, y=275, anchor=tk.SW)
 INSPE_TIMER_HORI = tk.Label(ventana,text='OK', font=('Arial', 10, 'bold'), fg='black',justify='left')
 INSPE_TIMER_HORI.place(x=355, y=275, anchor=tk.SW)
 
-thread_alineamiento = threading.Thread(target=control, args=(INSPE_TIMER_VERT, INSPE_TIMER_HORI))
+thread_alineamiento = threading.Thread(name='CONTROL_MARCADO',target=control, args=(INSPE_TIMER_VERT, INSPE_TIMER_HORI))
 thread_alineamiento.start()
 
 ventana.mainloop()

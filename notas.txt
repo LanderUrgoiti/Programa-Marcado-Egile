@@ -1,0 +1,8 @@
+
+conda activate marcado
+
+pyinstaller --name MARCADO_NGV C:\Users\lander.urgoiti\Desktop\Python\Temporal_\Programa-Marcado-Egile\main.py
+
+pyinstaller --name MARCADO_NGV --noconsole C:\Users\lander.urgoiti\Desktop\Python\Temporal_\Programa-Marcado-Egile\main.py
+
+pyinstaller --name MARCADO_NGV_SISTE --noconsole C:\Users\lander.urgoiti\Desktop\Python\Temporal_\Programa-Marcado-Egile\main_SISTE.py
