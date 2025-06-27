@@ -924,7 +924,8 @@ def soloOF(coditex):
 
 def oficial(coditex):
 
-    SER_FUN = coditex.replace('SER', '')
+    SER_FUN = coditex.upper()
+    SER_FUN = SER_FUN.replace('SER', '')
     SER_FUN = SER_FUN.replace(' ', '')
 
     with db_conn_po('ODBC Driver 17 for SQL Server', BD, BD_BD, BD_USR, BD_PWD) as cursor:
