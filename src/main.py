@@ -17,6 +17,8 @@ import win32gui
 import openpyxl
 import shutil
 import threading
+import json
+import sys
 
 # dirección IP y puerto del dispositivo
 ip_address = '192.168.10.179'
@@ -46,10 +48,23 @@ SISTE = 'MENITSISTEPLANT'
 SISTE_BD = 'marcadongvs'
 SISTE_USR = 'escrituraCaptor'
 SISTE_PWD = '0'
+
 BD = 'MENITBD'
 BD_BD = 'IDSDMP1'
 BD_USR = 'lecturaIDS'
 BD_PWD = '0'
+
+def data_path(filename):
+    """Obtiene la ruta del archivo en desarrollo o compilado"""
+    if hasattr(sys, '_MEIPASS'):
+        # Si el script está congelado (ejecutable .exe)
+        base_path = os.path.dirname(sys.executable)
+    else:
+        # En desarrollo (script .py)
+        base_path = os.path.dirname(os.path.abspath(__file__))
+        #base_path = os.path.join(base_path, '..', 'data')
+
+    return os.path.join(base_path, filename)
 
 def comprobar_apertura(of):
 
@@ -614,8 +629,21 @@ def estado():
 
 def marcar(KH,OF):
 
-#BUSCAR LOS DATOS DEL PROGRAMA DEFINIDOS EN LA BASE DE DATOS DE MARCADO
+    #jprogramas = data_path('programas.json')
+    with open(data_path('programas.json'), 'r', encoding='utf-8') as f:
+        jdata = json.load(f)
+    #print(jdata['horizontal'])
+
+    #BUSCAR LOS DATOS DEL PROGRAMA DEFINIDOS EN LA BASE DE DATOS DE MARCADO
     try:
+
+        for item in jdata["programa"]:
+            if item["partnumber"] == KH:
+                MFR = item["mfr"]
+                SER = item['ser']
+                PNR = item[]
+                print("MFR:", mfr_value)
+                break
         with db_conn_po('ODBC Driver 17 for SQL Server', SISTE, SISTE_BD, SISTE_USR, SISTE_PWD) as cursor:
             # We truncate the table
             consulta = "SELECT PartNumber, Fichero, Marcadora, TipoMarcado, MFR, SER, PNR, ASSY, NumeroRevision FROM ProgramaMarcado WITH (NOLOCK) WHERE PartNumber LIKE ? AND EnUso ='1'"
@@ -632,40 +660,62 @@ def marcar(KH,OF):
 
             # CONTADOR DE MARCAJES 
             if KH in ['KH18990', 'KH18995']:
-                consulta = 'SELECT PartNumber, Fichero FROM ProgramaMarcado WITH (NOLOCK) WHERE PartNumber LIKE ?'
-                cursor.execute(consulta, 'CONTAHORI')
-                resultado = cursor.fetchone() #ESTA FUNCIÓN SACA LA OF, EL CÓDIGO ARTÍCULO Y EL SN DE FUNDIDO
-                CONTAHORI = int(resultado[1])
-                CONTAHORI += 1
-                consulta = 'SELECT PartNumber, Fichero FROM ProgramaMarcado WITH (NOLOCK) WHERE PartNumber LIKE ?'
-                cursor.execute(consulta, 'MAXHORI')
-                resultado = cursor.fetchone() #ESTA FUNCIÓN SACA LA OF, EL CÓDIGO ARTÍCULO Y EL SN DE FUNDIDO
-                MAXHORI = int(resultado[1])
-                if CONTAHORI >= MAXHORI:
+                contahori = jdata['horizontal']
+                contahori += 1
+                maxhori = jdata['hmax']
+                if contahori >= maxhori:
                     thread_control_cambio = threading.Thread(target=messagebox.showerror, args=('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA HORIZONTAL\n¡ATENCIÓN!\nCOMPRUEBA QUE LA PIEZA SE HA MARCADO CORRECTAMENTE"))
                     thread_control_cambio.start()
-                    #messagebox.showerror('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA HORIZONTAL\n¡ATENCIÓN! PIEZA NO MARCADA, ACEPTAR PARA MARCAR")
-                CONTAHORI = str(CONTAHORI)
-                consulta = 'UPDATE ProgramaMarcado SET Fichero = ? WHERE PartNumber=?'
-                cursor.execute(consulta, CONTAHORI, 'CONTAHORI')
+                jdata['horizontal'] = contahori
+                with open(data_path('programas.json'), 'w', encoding='utf-8') as f:
+                    json.dump(jdata, f, indent=4)
+
+                #consulta = 'SELECT PartNumber, Fichero FROM ProgramaMarcado WITH (NOLOCK) WHERE PartNumber LIKE ?'
+                #cursor.execute(consulta, 'CONTAHORI')
+                #resultado = cursor.fetchone() #ESTA FUNCIÓN SACA LA OF, EL CÓDIGO ARTÍCULO Y EL SN DE FUNDIDO
+                #CONTAHORI = int(resultado[1])
+                #CONTAHORI += 1
+                #consulta = 'SELECT PartNumber, Fichero FROM ProgramaMarcado WITH (NOLOCK) WHERE PartNumber LIKE ?'
+                #cursor.execute(consulta, 'MAXHORI')
+                #resultado = cursor.fetchone() #ESTA FUNCIÓN SACA LA OF, EL CÓDIGO ARTÍCULO Y EL SN DE FUNDIDO
+                #MAXHORI = int(resultado[1])
+
+                #if CONTAHORI >= MAXHORI:
+                #    thread_control_cambio = threading.Thread(target=messagebox.showerror, args=('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA HORIZONTAL\n¡ATENCIÓN!\nCOMPRUEBA QUE LA PIEZA SE HA MARCADO CORRECTAMENTE"))
+                #    thread_control_cambio.start()
+                #    #messagebox.showerror('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA HORIZONTAL\n¡ATENCIÓN! PIEZA NO MARCADA, ACEPTAR PARA MARCAR")
+                #CONTAHORI = str(CONTAHORI)
+                #consulta = 'UPDATE ProgramaMarcado SET Fichero = ? WHERE PartNumber=?'
+                #cursor.execute(consulta, CONTAHORI, 'CONTAHORI')
             
             else:
-                consulta = 'SELECT PartNumber, Fichero FROM ProgramaMarcado WITH (NOLOCK) WHERE PartNumber LIKE ?'
-                cursor.execute(consulta, 'CONTAVERT')
-                resultado = cursor.fetchone() #ESTA FUNCIÓN SACA LA OF, EL CÓDIGO ARTÍCULO Y EL SN DE FUNDIDO
-                CONTAVERT = int(resultado[1])
-                CONTAVERT += 1
-                consulta = 'SELECT PartNumber, Fichero FROM ProgramaMarcado WITH (NOLOCK) WHERE PartNumber LIKE ?'
-                cursor.execute(consulta, 'MAXVERT')
-                resultado = cursor.fetchone() #ESTA FUNCIÓN SACA LA OF, EL CÓDIGO ARTÍCULO Y EL SN DE FUNDIDO
-                MAXVERT = int(resultado[1])
-                if CONTAVERT >= MAXVERT:
+                contavert = jdata['vertical']
+                contavert += 1
+                maxvert = jdata['vmax']
+                if contavert >= maxvert:
                     thread_control_cambio = threading.Thread(target=messagebox.showerror, args=('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA VERTICAL\n¡ATENCIÓN!\nCOMPRUEBA QUE LA PIEZA SE HA MARCADO CORRECTAMENTE"))
                     thread_control_cambio.start()
+                jdata['vertical'] = contavert
+                with open(data_path('programas.json'), 'w', encoding='utf-8') as f:
+                    json.dump(jdata, f, indent=4)
+
+
+                #consulta = 'SELECT PartNumber, Fichero FROM ProgramaMarcado WITH (NOLOCK) WHERE PartNumber LIKE ?'
+                #cursor.execute(consulta, 'CONTAVERT')
+                #resultado = cursor.fetchone() #ESTA FUNCIÓN SACA LA OF, EL CÓDIGO ARTÍCULO Y EL SN DE FUNDIDO
+                #CONTAVERT = int(resultado[1])
+                #CONTAVERT += 1
+                #consulta = 'SELECT PartNumber, Fichero FROM ProgramaMarcado WITH (NOLOCK) WHERE PartNumber LIKE ?'
+                #cursor.execute(consulta, 'MAXVERT')
+                #resultado = cursor.fetchone() #ESTA FUNCIÓN SACA LA OF, EL CÓDIGO ARTÍCULO Y EL SN DE FUNDIDO
+                #MAXVERT = int(resultado[1])
+                #if CONTAVERT >= MAXVERT:
+                #    thread_control_cambio = threading.Thread(target=messagebox.showerror, args=('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA VERTICAL\n¡ATENCIÓN!\nCOMPRUEBA QUE LA PIEZA SE HA MARCADO CORRECTAMENTE"))
+                #    thread_control_cambio.start()
                     #messagebox.showerror('CAMBIO DE PUNTA', "CAMBIAR LA PUNTA EN MARCADORA VERTICAL\n¡ATENCIÓN! PIEZA NO MARCADA, ACEPTAR PARA MARCAR")
-                CONTAVERT = str(CONTAVERT)
-                consulta = 'UPDATE ProgramaMarcado SET Fichero = ? WHERE PartNumber=?'
-                cursor.execute(consulta, CONTAVERT, 'CONTAVERT')
+                #CONTAVERT = str(CONTAVERT)
+                #consulta = 'UPDATE ProgramaMarcado SET Fichero = ? WHERE PartNumber=?'
+                #cursor.execute(consulta, CONTAVERT, 'CONTAVERT')
 
     except:
         messagebox.showerror('ERROR', "NO HAY UN PROGRAMA DEFINIDO PARA ESTA PIEZA")
